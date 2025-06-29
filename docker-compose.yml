@@ -1,0 +1,86 @@
+version: '3.1'
+services:
+  core-service:
+    container_name: core-service
+    hostname: core
+    image: core-service
+    build: 
+      context: .
+      dockerfile: DockerfileCore
+      args:
+        - CORE_REPO_URL=${CORE_REPO_URL}
+    env_file: env_file
+    ports:
+      - 8085:8080
+    depends_on:
+      - postgres_server
+    networks:
+       - net-microservice
+       - net-db
+       
+  user-service:
+    container_name: user-service
+    hostname: user
+    image: user-service
+    build: 
+      context: .
+      dockerfile: DockerfileUser
+      args:
+        - USER_REPO_URL=${USER_REPO_URL}
+    env_file: env_file
+    ports:
+      - 8065:8060
+    depends_on:
+      - core-service
+    networks:
+       - net-microservice
+       - net-db
+
+  ui-service:
+    container_name: ui-service
+    image: ui-service
+    build: 
+      context: .
+      dockerfile: DockerfileUi
+      args:
+        - UI_REPO_URL=${UI_REPO_URL}
+    ports:
+      - 4205:4200
+    networks:
+     - net-microservice
+     - net-db
+    environment:
+      NODE_OPTIONS: --max_old_space_size=2572
+     
+  postgres_server:
+    image: postgres:12-bullseye
+    container_name: postgres_server
+    ports:
+      - 2345:5432
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./postgres-data:/var/lib/postgresql/data
+    env_file: env_postgres
+    networks:
+      - net-db
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: gcdocker
+    ports:
+      - "5052:80"
+    networks:
+      - net-db
+
+volumes:
+    postgres-data:
+
+networks:
+    net-microservice:
+        driver: bridge
+    net-db:
+        driver: bridge

@@ -1,0 +1,22 @@
+FROM alpine/git as clone
+WORKDIR /app
+ARG UI_REPO_URL
+RUN git clone -b dev $UI_REPO_URL
+
+# Прямо копіюємо environment.ts у потрібну папку, без rm і cp
+COPY environment.ts /app/GreenCityClient/src/environments/environment.ts
+
+FROM node:14.20.1-alpine AS build
+WORKDIR /app
+
+COPY --from=clone /app/GreenCityClient /app
+
+RUN npm install -g @angular/cli@9.1.15
+RUN npm install --save-dev @angular-devkit/build-angular
+
+RUN npm install
+
+EXPOSE 4200
+
+# CMD у вигляді масиву (рекомендований формат)
+CMD ["ng", "serve", "--aot=false", "--host", "0.0.0.0", "--disableHostCheck"]

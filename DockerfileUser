@@ -1,0 +1,17 @@
+FROM alpine/git as clone
+WORKDIR /app
+ARG USER_REPO_URL
+RUN git clone -b dev $USER_REPO_URL
+
+FROM maven:3.9-amazoncorretto-21 as build
+WORKDIR /app
+COPY --from=clone /app/GreenCityUser21 /app
+RUN mvn formatter:format
+RUN mvn package -DskipTests -Dcheckstyle.skip
+
+FROM openjdk:22-ea-21-jdk-slim
+WORKDIR /app
+COPY google-creds.json ./google-creds.json
+COPY --from=build /app/core/target/*.jar /app
+ENTRYPOINT ["sh", "-c"]
+CMD ["java -jar *.jar"]
