@@ -1,5 +1,4 @@
-version: '3.9'  # використано 3.9 для підтримки condition: service_healthy
-
+version: '3.1'
 services:
   core-service:
     container_name: core-service
@@ -16,15 +15,9 @@ services:
     depends_on:
       - postgres_server
     networks:
-      - net-microservice
-      - net-db
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
+       - net-microservice
+       - net-db
+       
   user-service:
     container_name: user-service
     hostname: user
@@ -38,11 +31,10 @@ services:
     ports:
       - 8065:8060
     depends_on:
-      core-service:
-        condition: service_healthy
+      - core-service
     networks:
-      - net-microservice
-      - net-db
+       - net-microservice
+       - net-db
 
   ui-service:
     container_name: ui-service
@@ -55,11 +47,11 @@ services:
     ports:
       - 4205:4200
     networks:
-      - net-microservice
-      - net-db
+     - net-microservice
+     - net-db
     environment:
       NODE_OPTIONS: --max_old_space_size=2572
-
+     
   postgres_server:
     image: postgres:12-bullseye
     container_name: postgres_server
@@ -85,10 +77,10 @@ services:
       - net-db
 
 volumes:
-  postgres-data:
+    postgres-data:
 
 networks:
-  net-microservice:
-    driver: bridge
-  net-db:
-    driver: bridge
+    net-microservice:
+        driver: bridge
+    net-db:
+        driver: bridge
